@@ -28,6 +28,11 @@ def get_db_connection():
 app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY", "chave_super_secreta")
 jwt = JWTManager(app)
 
+# Rota principal para verificação do servidor
+@app.route("/", methods=["GET"])
+def home():
+    return jsonify({"message": "Servidor Flask está rodando!"}), 200
+
 # 🔹 1. LOGIN DO ADMINISTRADOR
 @app.route("/login_admin", methods=["POST"])
 def login_admin():
