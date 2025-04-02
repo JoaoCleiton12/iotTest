@@ -3,3 +3,4 @@ flask-jwt-extended
 mysql-connector-python
 bcrypt
 gunicorn
+psycopg2-binary
