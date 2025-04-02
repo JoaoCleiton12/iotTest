@@ -7,19 +7,13 @@ from flask_jwt_extended import create_access_token, jwt_required, JWTManager, ge
 
 app = Flask(__name__)
 
-# Configuração do banco de dados usando variáveis de ambiente
-db_config = {
-    "host": os.getenv("DB_HOST", "localhost"),
-    "user": os.getenv("DB_USER", "iot_auth_user"),
-    "password": os.getenv("DB_PASSWORD", "password"),
-    "dbname": os.getenv("DB_NAME", "iot_auth"),
-    "port": os.getenv("DB_PORT", "5432")
-}
+# Configuração correta do banco de dados
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://iot_auth_user:Y7Ogpp0VgDNakTSBP16nVSIBj0jsUKbr@dpg-cvmj25buibrs73bhukrg-a/iot_auth")
 
-# Conectar ao banco de dados
 def get_db_connection():
     try:
-        return psycopg2.connect(**db_config)
+        conn = psycopg2.connect(DATABASE_URL)
+        return conn
     except psycopg2.Error as err:
         print(f"Erro ao conectar ao banco de dados: {err}")
         exit(1)
@@ -28,12 +22,10 @@ def get_db_connection():
 app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY", "chave_super_secreta")
 jwt = JWTManager(app)
 
-# Rota principal para verificação do servidor
 @app.route("/", methods=["GET"])
 def home():
     return jsonify({"message": "Servidor Flask está rodando!"}), 200
 
-# 🔹 1. LOGIN DO ADMINISTRADOR
 @app.route("/login_admin", methods=["POST"])
 def login_admin():
     data = request.json
@@ -50,13 +42,12 @@ def login_admin():
     cursor.close()
     conn.close()
 
-    if user and bcrypt.checkpw(password.encode('utf-8'), user[1].encode('utf-8')):  
+    if user and bcrypt.checkpw(password.encode('utf-8'), user[1].encode('utf-8')):
         access_token = create_access_token(identity=json.dumps({"username": username, "role": "admin"}))
         return jsonify({"access_token": access_token}), 200
 
     return jsonify({"error": "Credenciais inválidas"}), 401
 
-# 🔹 2. LOGIN DE DISPOSITIVO
 @app.route("/login_device", methods=["POST"])
 def login_device():
     data = request.json
@@ -73,13 +64,12 @@ def login_device():
     cursor.close()
     conn.close()
 
-    if device and bcrypt.checkpw(password.encode('utf-8'), device[1].encode('utf-8')):  
+    if device and bcrypt.checkpw(password.encode('utf-8'), device[1].encode('utf-8')):
         access_token = create_access_token(identity=json.dumps({"username": username, "role": "device"}))
         return jsonify({"access_token": access_token}), 200
 
     return jsonify({"error": "Credenciais inválidas"}), 401
 
-# 🔹 3. REGISTRO DE DISPOSITIVO (SOMENTE ADMIN)
 @app.route("/register_device", methods=["POST"])
 @jwt_required()
 def register_device():
@@ -91,10 +81,7 @@ def register_device():
     if not device_name or not username or not password:
         return jsonify({"error": "Todos os campos são obrigatórios"}), 400
 
-    # Pegando o usuário autenticado
     current_user = json.loads(get_jwt_identity())
-
-    # Verifica se é um admin
     if current_user.get("role") != "admin":
         return jsonify({"error": "Apenas administradores podem registrar dispositivos"}), 403
 
