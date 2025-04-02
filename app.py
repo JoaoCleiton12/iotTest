@@ -110,12 +110,12 @@ def get_broker_info():
     if current_user.get("role") != "device":
         return jsonify({"error": "Acesso negado"}), 403
 
-    # Retorna as configurações do broker Mosquitto Público
+    # Retorna as configurações do broker HiveMQ
     return jsonify({
         "mqtt_ip": "test.mosquitto.org",
-        "mqtt_port": 8883,
+        "mqtt_port": 1883,
         "xxtea_key": "chave_secreta"
     }), 200
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8443, debug=True, ssl_context=("cert.pem", "key.pem"))
+    app.run(host="0.0.0.0", port=5000, debug=True)
