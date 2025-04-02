@@ -100,5 +100,22 @@ def register_device():
         cursor.close()
         conn.close()
 
+@app.route("/get_broker_info", methods=["GET"])
+@jwt_required()
+def get_broker_info():
+    # Identidade do usuário autenticado via JWT
+    current_user = json.loads(get_jwt_identity())
+
+    # Apenas dispositivos podem acessar essa rota
+    if current_user.get("role") != "device":
+        return jsonify({"error": "Acesso negado"}), 403
+
+    # Retorna as configurações do broker HiveMQ
+    return jsonify({
+        "mqtt_ip": "broker.hivemq.com",
+        "mqtt_port": 1883,
+        "xxtea_key": "chave_secreta"
+    }), 200
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
