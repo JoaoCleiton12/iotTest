@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify
 import bcrypt
-import mysql.connector
+import psycopg2
 import json
 import os
 from flask_jwt_extended import create_access_token, jwt_required, JWTManager, get_jwt_identity
@@ -10,17 +10,19 @@ app = Flask(__name__)
 # Configuração do banco de dados usando variáveis de ambiente
 db_config = {
     "host": os.getenv("DB_HOST", "localhost"),
-    "user": os.getenv("DB_USER", "root"),
-    "password": os.getenv("DB_PASSWORD", "root"),
-    "database": os.getenv("DB_NAME", "IoT_Auth"),
+    "user": os.getenv("DB_USER", "iot_auth_user"),
+    "password": os.getenv("DB_PASSWORD", "password"),
+    "dbname": os.getenv("DB_NAME", "iot_auth"),
+    "port": os.getenv("DB_PORT", "5432")
 }
 
 # Conectar ao banco de dados
-try:
-    db = mysql.connector.connect(**db_config)
-except mysql.connector.Error as err:
-    print(f"Erro ao conectar ao banco de dados: {err}")
-    exit(1)
+def get_db_connection():
+    try:
+        return psycopg2.connect(**db_config)
+    except psycopg2.Error as err:
+        print(f"Erro ao conectar ao banco de dados: {err}")
+        exit(1)
 
 # Configuração do JWT
 app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY", "chave_super_secreta")
@@ -36,12 +38,14 @@ def login_admin():
     if not username or not password:
         return jsonify({"error": "Usuário e senha são obrigatórios"}), 400
 
-    cursor = db.cursor(dictionary=True)
+    conn = get_db_connection()
+    cursor = conn.cursor()
     cursor.execute("SELECT username, password_hash FROM users WHERE username = %s AND role = 'admin'", (username,))
     user = cursor.fetchone()
     cursor.close()
+    conn.close()
 
-    if user and bcrypt.checkpw(password.encode('utf-8'), user["password_hash"].encode('utf-8')):  
+    if user and bcrypt.checkpw(password.encode('utf-8'), user[1].encode('utf-8')):  
         access_token = create_access_token(identity=json.dumps({"username": username, "role": "admin"}))
         return jsonify({"access_token": access_token}), 200
 
@@ -57,12 +61,14 @@ def login_device():
     if not username or not password:
         return jsonify({"error": "Usuário e senha são obrigatórios"}), 400
 
-    cursor = db.cursor(dictionary=True)
+    conn = get_db_connection()
+    cursor = conn.cursor()
     cursor.execute("SELECT username, password_hash FROM devices WHERE username = %s", (username,))
     device = cursor.fetchone()
     cursor.close()
+    conn.close()
 
-    if device and bcrypt.checkpw(password.encode('utf-8'), device["password_hash"].encode('utf-8')):  
+    if device and bcrypt.checkpw(password.encode('utf-8'), device[1].encode('utf-8')):  
         access_token = create_access_token(identity=json.dumps({"username": username, "role": "device"}))
         return jsonify({"access_token": access_token}), 200
 
@@ -89,16 +95,18 @@ def register_device():
 
     hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
-    cursor = db.cursor()
+    conn = get_db_connection()
+    cursor = conn.cursor()
     try:
         cursor.execute("INSERT INTO devices (device_name, username, password_hash) VALUES (%s, %s, %s)",
                        (device_name, username, hashed_password))
-        db.commit()
+        conn.commit()
         return jsonify({"message": "Dispositivo registrado com sucesso!"}), 201
-    except mysql.connector.Error as err:
+    except psycopg2.Error as err:
         return jsonify({"error": str(err)}), 400
     finally:
         cursor.close()
+        conn.close()
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
