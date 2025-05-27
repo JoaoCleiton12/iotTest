@@ -8,7 +8,7 @@ from flask_jwt_extended import create_access_token, jwt_required, JWTManager, ge
 app = Flask(__name__)
 
 # Configuração correta do banco de dados
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://iot_auth2_user:E9u5n6WUFQXHMbMj3sBBKtRCHKhqPBZC@dpg-d03v3spr0fns73clgasg-a/iot_auth2")
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://iot_auth_72dp_user:nU3OyFpgmCCsOxCaPJhcta9WrALgN7au@dpg-d0r41tje5dus73fjjtd0-a.oregon-postgres.render.com/iot_auth_72dp")
 
 def get_db_connection():
     try:
