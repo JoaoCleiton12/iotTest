@@ -8,7 +8,7 @@ from flask_jwt_extended import create_access_token, jwt_required, JWTManager, ge
 app = Flask(__name__)
 
 # Configuração correta do banco de dados
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://iot_auth_fooy_user:ans9RyDcRMvuLKWMqJ37oidGtELd7sdz@dpg-d28gq53uibrs73atd3cg-a/iot_auth_fooy")
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://iot_auth_m0zh_user:u89BwZnh9hmFfuK3l2bNDDmRYjfbL0O7@dpg-d3mqu1ruibrs73a119mg-a/iot_auth_m0zh")
 
 def get_db_connection():
     try:
@@ -119,5 +119,6 @@ def get_broker_info():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
+
 
 
