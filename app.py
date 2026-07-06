@@ -112,7 +112,7 @@ def get_broker_info():
 
     # Retorna as configurações do broker HiveMQ
     return jsonify({
-        "mqtt_ip": "broker.emqx.io",
+        "mqtt_ip": "test.mosquitto.org",
         "mqtt_port": 1883,
         "xxtea_key": "chave_secreta"
     }), 200
